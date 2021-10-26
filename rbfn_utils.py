@@ -39,6 +39,7 @@ class RBFN():
             N (rows) is the input points
             M (cols) is the features for each point
         """
+       
         # Ouput of rbf layer is (number of input points) X (number of target points)
         out_rbf_layer = np.zeros((input_pts.shape[0], self.target_pts.shape[0]))
 
@@ -60,10 +61,40 @@ class RBFN():
         out_activation_func = self.activation_func(out_linear_layer)
 
         return out_activation_func
+    
+    def update_target(self, num_target: int, new_target_pt: np.ndarray)->None:
+        """Updates a target point for an RBF function by replacing the current 
+        target point with a new target point 
+
+        num_target (int): number of the target point you want to update
+        target_pt (np.ndarray): N numpy array
+            Each element represents a feature of the new target point
+        """
+        if new_target_pt.shape[0] != self.target_pts.shape[1]:
+            raise Exception("New target point does not have the same number of features as existing target point")
+
+        self.target_pts[num_target] = new_target_pt
+
+        return None
 
 def guassian_rbf_func(input_pt: np.ndarray, target_pt: np.ndarray, epsilon: float)->float:
     r = np.linalg.norm(input_pt-target_pt)
     out = np.exp(- (epsilon * r)**2 )
+    return out
+
+def multiquadric_rbf_func(input_pt: np.ndarray, target_pt: np.ndarray, epsilon: float)->float:
+    r = np.linalg.norm(input_pt-target_pt)
+    out = np.sqrt(1+(epsilon*r)**2)
+    return out
+
+def inverse_quadric_rbf_func(input_pt: np.ndarray, target_pt: np.ndarray, epsilon: float)->float:
+    r = np.linalg.norm(input_pt-target_pt)
+    out = 1/(1+(epsilon*r)**2)
+    return out
+
+def inverse_multiquadric_func(input_pt: np.ndarray, target_pt: np.ndarray, epsilon: float)->float:
+    r = np.linalg.norm(input_pt-target_pt)
+    out = 1/np.sqrt(1+(epsilon*r)**2)
     return out
 
 def dummy_activation_func(input_pt: np.ndarray)->np.ndarray:

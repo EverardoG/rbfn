@@ -46,6 +46,30 @@ class TestRBFN(unittest.TestCase):
         exp = np.ones((num_input_pts, num_linear_units))
         for out in outs:
             self.assertTrue(np.allclose(out, exp))
+    
+    def test_update_targets(self):
+        """Test if we can update the target points the RBFN uses
+        """
+        # Set up network with arbitrary parameters
+        num_targets = 5
+        num_features = 20
+        target_pts = np.zeros((num_targets, num_features))
+        num_linear_units = 2
+        epsilon = 0.99
+        rbfn = RBFN(rbf_func=guassian_rbf_func, activation_func=dummy_activation_func, target_pts=target_pts,
+                    num_linear_units=num_linear_units, epsilon=epsilon)
+
+        # Update target point 2
+        new_target_pt = np.ones(num_features)
+        rbfn.update_target(2, new_target_pt)
+
+        # Make sure targets were updated properly
+        self.assertTrue(np.allclose(rbfn.target_pts[2,:], new_target_pt))
+
+        # Check if the update fails with an improperly sized target point
+        new_target_pt = np.ones(num_features-1)
+        with self.assertRaises(Exception):
+            rbfn.update_target(2, new_target_pt)
 
 if __name__ == "__main__":
     unittest.main()
