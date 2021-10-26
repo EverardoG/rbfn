@@ -23,7 +23,7 @@ class RBFN():
         self.epsilon = epsilon
         # In self.weights, each row is a linear unit, each column is a weight of that unit
         if weights is None:
-            self.weights = np.random.rand( num_linear_units, target_pts.shape[0])
+            self.weights = np.random.rand( num_linear_units, target_pts.shape[0]+1)
         else:
             self.weights = weights
         
@@ -37,7 +37,7 @@ class RBFN():
             N (rows) is the input points
             M (cols) is the features for each point
         """
-       
+
         # Ouput of rbf layer is (number of input points) X (number of target points)
         self.out_rbf_layer = np.zeros((input_pts.shape[0], self.target_pts.shape[0]))
 
@@ -46,6 +46,9 @@ class RBFN():
             for rbf_num in range(self.target_pts.shape[0]):
                 self.out_rbf_layer[pt_num, rbf_num] = guassian_rbf_func(input_pts[pt_num], self.target_pts[rbf_num], self.epsilon)
 
+        # Add bias term to rbf layer output before putting output through the linear layer
+        out_rbf_layer_b = add_bias(self.out_rbf_layer)
+
         # Output of linear layer is (number of input points) X (number of linear units)
         self.out_linear_layer = np.zeros((input_pts.shape[0], self.weights.shape[0]))
 
@@ -53,7 +56,7 @@ class RBFN():
         for pt_num in range(input_pts.shape[0]):
             for unit_num in range(self.weights.shape[0]):
                 # Apply weights and take sum
-                self.out_linear_layer[pt_num, unit_num] = np.sum(self.out_rbf_layer[pt_num] * self.weights[unit_num])
+                self.out_linear_layer[pt_num, unit_num] = np.sum(out_rbf_layer_b[pt_num] * self.weights[unit_num])
 
         return self.out_linear_layer
     
@@ -71,6 +74,9 @@ class RBFN():
         self.target_pts[num_target] = new_target_pt
 
         return None
+
+def add_bias(arr: np.ndarray):
+    return np.hstack((arr, np.ones((arr.shape[0], 1))))
 
 def guassian_rbf_func(input_pt: np.ndarray, target_pt: np.ndarray, epsilon: float)->float:
     r = np.linalg.norm(input_pt-target_pt)

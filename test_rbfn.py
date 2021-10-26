@@ -16,18 +16,18 @@ class TestRBFN(unittest.TestCase):
         If we send forward points with features that are all 0,
         we expect the first target will be activated the most, and so on
 
-        With a dummy activation function that doesn't change the output of the 
-        linear layer, we should just see the output always sum to 1 no matter
-        which point we put in
+        We should just see the output always sum to 2 no matter
+        which point we put in. 1 for the sum of all the outputs of the RB functions
+        for a particular input point PLUS 1 for the bias term
 
         """
         # Set up network with arbitrary parameters
         num_targets = 5
         num_features = 20
         target_pts = np.full((num_features, num_targets), np.arange(5)).T
-        num_linear_units = 1
+        num_linear_units = 2
         epsilon = 0.99
-        weights = np.ones((num_linear_units, num_targets))
+        weights = np.ones((num_linear_units, num_targets+1))
 
         # One target is all 0s, next is all 1s, etc
         # Activation function will just return linear layer output without modification
@@ -35,7 +35,7 @@ class TestRBFN(unittest.TestCase):
                     num_linear_units=num_linear_units, epsilon=epsilon, weights=weights)
         
         # Pass input pts forward
-        num_input_pts = 5
+        num_input_pts = 1
         input_vals = np.arange(num_targets)
         outs = []
         for input_val in input_vals:
@@ -43,7 +43,7 @@ class TestRBFN(unittest.TestCase):
             outs.append(rbfn.forward(input_pts=input_pts))
 
         # Compare to expected output
-        exp = np.ones((num_input_pts, num_linear_units))
+        exp = np.ones((num_input_pts, num_linear_units))*2
         for out in outs:
             self.assertTrue(np.allclose(out, exp))
     
