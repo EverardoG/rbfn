@@ -1,4 +1,4 @@
-from rbfn_utils import RBFN, guassian_rbf_func, dummy_activation_func
+from rbfn_utils import RBFN, guassian_rbf_func
 import numpy as np
 import unittest
 
@@ -31,7 +31,7 @@ class TestRBFN(unittest.TestCase):
 
         # One target is all 0s, next is all 1s, etc
         # Activation function will just return linear layer output without modification
-        rbfn = RBFN(rbf_func=guassian_rbf_func, activation_func=dummy_activation_func, target_pts=target_pts, 
+        rbfn = RBFN(rbf_func=guassian_rbf_func, target_pts=target_pts, 
                     num_linear_units=num_linear_units, epsilon=epsilon, weights=weights)
         
         # Pass input pts forward
@@ -56,7 +56,7 @@ class TestRBFN(unittest.TestCase):
         target_pts = np.zeros((num_targets, num_features))
         num_linear_units = 2
         epsilon = 0.99
-        rbfn = RBFN(rbf_func=guassian_rbf_func, activation_func=dummy_activation_func, target_pts=target_pts,
+        rbfn = RBFN(rbf_func=guassian_rbf_func, target_pts=target_pts,
                     num_linear_units=num_linear_units, epsilon=epsilon)
 
         # Update target point 2
