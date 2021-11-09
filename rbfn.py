@@ -83,15 +83,15 @@ class RBFN():
         self.input_pts = input_pts
 
         # Ouput of rbf layer is (number of input points) X (number of center points)
-        self.out_rbf_layer = np.zeros((input_pts.shape[0], self.center_pts.shape[0]))
+        out_rbf_layer_raw = np.zeros((input_pts.shape[0], self.center_pts.shape[0]))
 
         # Apply rbfs to input point and save output
         for pt_num in range(input_pts.shape[0]):
             for rbf_num in range(self.center_pts.shape[0]):
-                self.out_rbf_layer[pt_num, rbf_num] = self.rbf_func(input_pts[pt_num], self.center_pts[rbf_num], self.epsilon)
+                out_rbf_layer_raw[pt_num, rbf_num] = self.rbf_func(input_pts[pt_num], self.center_pts[rbf_num], self.epsilon)
 
         # Add bias term to rbf layer output before putting output through the linear layer
-        out_rbf_layer_b = add_bias(self.out_rbf_layer)
+        self.out_rbf_layer = add_bias(out_rbf_layer_raw)
 
         # Output of linear layer is (number of input points) X (number of linear units)
         self.out_linear_layer = np.zeros((input_pts.shape[0], self.weights.shape[0]))
@@ -100,11 +100,11 @@ class RBFN():
         for pt_num in range(input_pts.shape[0]):
             for unit_num in range(self.weights.shape[0]):
                 # Apply weights and take sum
-                self.out_linear_layer[pt_num, unit_num] = np.sum(out_rbf_layer_b[pt_num] * self.weights[unit_num])
+                self.out_linear_layer[pt_num, unit_num] = np.sum(self.out_rbf_layer[pt_num] * self.weights[unit_num])
 
         return self.out_linear_layer
     
-    def backprop(self, target_out: np.ndarray):
+    def backprop(self, target_out: np.ndarray)->None:
         """Update weights and centers through backpropogation using the information from the
         last forward pass
 
@@ -115,8 +115,29 @@ class RBFN():
 
         # Update linear weights
         error = target_out - self.out_linear_layer
-        delta_linear = error * self.out_linear_layer * (1 - self.out_linear_layer)
-        self.weights += self.linear_lr * delta_linear * self.input_pts
+        print("target_out:\n", target_out)
+        print("self.out_linear_layer:\n", self.out_linear_layer)
+        print("error:\n", error)
+        # delta_linear = error * self.out_linear_layer * (1 - self.out_linear_layer)
+        # print("delta_linear:\n", delta_linear)
+        print("self.weights:\n", self.weights)
+        print("self.input_pts:\n", self.input_pts)
+        num_pts = self.input_pts.shape[0]
+        # self.weights = np.random.rand( num_linear_units, center_pts.shape[0]+1)
+        weight_deltas = np.zeros((self.weights.shape[0], self.weights.shape[1],num_pts))
+        for num_pt in range(num_pts):
+            # num output is the number of linear units
+            for num_output in range(self.weights.shape[0]):
+                # num input is the number of the rbf units + bias term
+                for num_input in range(self.weights.shape[1]):
+                    print("num_pt: ", num_pt, "| num_input: ", num_input, " | num_output: ", num_output)
+                    e = error[num_pt, num_output]
+                    x = self.out_rbf_layer[num_pt, num_input]
+                    weight_deltas[num_output, num_input, num_pt] = self.linear_lr * e * x
+        weight_delta = np.sum(weight_deltas, axis=2)
+        self.weights += weight_delta
+        return None
+        # self.weights += self.linear_lr * error * self.input_pts
 
         # Update rbf centers
         # RBF delta is (number of input points) X (number of center points)

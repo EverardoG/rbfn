@@ -1,10 +1,10 @@
-from rbfn import RBFN, guassian_rbf_func
+from rbfn import RBFN, RBFUNC
 import numpy as np
 import unittest
 
 class TestRBFN(unittest.TestCase):
 
-    def test_forward_out(self):
+    def test_forward_out(self)->None:
         """Test if we get the output we expect when we do a forward pass on the network
 
         center_pts is (num_centers) X (num_features)
@@ -31,8 +31,9 @@ class TestRBFN(unittest.TestCase):
 
         # One center is all 0s, next is all 1s, etc
         # Activation function will just return linear layer output without modification
-        rbfn = RBFN(rbf_func=guassian_rbf_func, center_pts=center_pts, 
-                    num_linear_units=num_linear_units, epsilon=epsilon, weights=weights)
+        rbfn = RBFN(rbfunc=RBFUNC.GUASSIAN, center_pts=center_pts, 
+                    num_linear_units=num_linear_units, epsilon=epsilon, 
+                    linear_lr=None, rbf_lr=None, weights=weights)
         
         # Pass input pts forward
         num_input_pts = 1
@@ -47,8 +48,8 @@ class TestRBFN(unittest.TestCase):
         for out in outs:
             self.assertTrue(np.allclose(out, exp))
     
-    def test_update_centers(self):
-        """Test if we can update the center points the RBFN uses
+    def test_update_centers(self)->None:
+        """Test if we can manually update the center points the RBFN uses
         """
         # Set up network with arbitrary parameters
         num_centers = 5
@@ -56,8 +57,9 @@ class TestRBFN(unittest.TestCase):
         center_pts = np.zeros((num_centers, num_features))
         num_linear_units = 2
         epsilon = 0.99
-        rbfn = RBFN(rbf_func=guassian_rbf_func, center_pts=center_pts,
-                    num_linear_units=num_linear_units, epsilon=epsilon)
+        rbfn = RBFN(rbfunc=RBFUNC.GUASSIAN, center_pts=center_pts,
+                    num_linear_units=num_linear_units, epsilon=epsilon,
+                    linear_lr=None, rbf_lr=None)
 
         # Update center point 2
         new_center_pt = np.ones(num_features)
@@ -71,7 +73,7 @@ class TestRBFN(unittest.TestCase):
         with self.assertRaises(Exception):
             rbfn.update_center(2, new_center_pt)
         
-    def test_backprop(self):
+    def test_backprop(self)->None:
         """Test if the network backpropogates error properly
 
         1) Test if linear layer weights are updated properly 
@@ -86,11 +88,32 @@ class TestRBFN(unittest.TestCase):
         The network should update weights such that each point is easily classified
         with training
         """
-
+        # Setup network and test data
+        center_pts = np.array([
+            [-1, 1],
+            [1,1],
+            [1,-1],
+            [-1,-1]
+        ])
+        target_out = np.array([
+            [1,0,0,0],
+            [0,1,0,0],
+            [0,0,1,0],
+            [0,0,0,1]
+        ])
+        input_pts = np.copy(center_pts)
+        weights = np.zeros((target_out.shape[1], center_pts.shape[0]+1))
+        epsilon = 0.99
+        linear_lr = 0.05
+        rbf_lr = 0
+        rbfn_c = RBFN(rbfunc=RBFUNC.GUASSIAN, center_pts=center_pts, num_linear_units=weights.shape[0], epsilon=epsilon, linear_lr=linear_lr, rbf_lr=rbf_lr, weights=weights)
+        # Run input data through RBFN and run backprop one step
+        _ = rbfn_c.forward(input_pts)
+        rbfn_c.backprop(target_out)
+        print(rbfn_c.weights)
         """
         2) Test if rbf centers are updated properly
         """
-        pass
 
 
 if __name__ == "__main__":
