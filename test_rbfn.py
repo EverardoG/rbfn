@@ -96,7 +96,7 @@ class TestRBFN(unittest.TestCase):
             [1,1],
             [1,-1],
             [-1,-1]
-        ])
+        ], dtype=float)
         target_out = np.array([
             [1,0,0,0],
             [0,1,0,0],
