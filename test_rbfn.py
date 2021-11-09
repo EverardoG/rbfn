@@ -1,8 +1,8 @@
 from rbfn import RBFN, RBFUNC
 import numpy as np
 import unittest
-from pprint import PrettyPrinter
-PP = PrettyPrinter()
+
+np.set_printoptions(precision=2, suppress=True)
 
 class TestRBFN(unittest.TestCase):
 
@@ -109,24 +109,31 @@ class TestRBFN(unittest.TestCase):
         linear_lr = 0.05
         rbf_lr = 0
         rbfn_c = RBFN(rbfunc=RBFUNC.GUASSIAN, center_pts=center_pts, num_linear_units=weights.shape[0], epsilon=epsilon, linear_lr=linear_lr, rbf_lr=rbf_lr, weights=weights)
+        
         # Run input data through RBFN and run backprop one step
-        # print(input_pts[0,:].shape)
-        single_pt = np.expand_dims(input_pts[0],axis=0)
-        single_t = np.expand_dims(target_out[0],axis=0)
-        # in = single_pt
-        _ = rbfn_c.forward(input_pts)
-        np.set_printoptions(precision=2, suppress=True)
-        print("Weights before:")
-        print(rbfn_c.weights)
-        rbfn_c.backprop(target_out)
-        print("RBF layer out:")
-        print(rbfn_c.out_rbf_layer)
-        print("Weights after:")
-        print(rbfn_c.weights)
-        print(rbfn_c.out_linear_layer)
-        # l = rbfn_c.weights.tolist()
-        # l = [[]]
-        # PP.pprint()
+        network_out = rbfn_c.forward(input_pts)
+        rbfn_c.backprop(target_out, network_out)
+
+        # Linear weights should now be updated by linear learning rate wherever
+        # the input point matched the rbf center and that corresponded to a
+        # particular output class
+        expected_weights = linear_lr * np.hstack((np.identity(4), np.ones((4,1))))
+
+        # Check that new weights match the expected weights
+        self.assertTrue(np.allclose(rbfn_c.weights, expected_weights))
+
+        # Run backprop 250 more times to check if weights converge
+        for _ in range(250):
+            network_out = rbfn_c.forward(input_pts)
+            rbfn_c.backprop(target_out, network_out)
+        
+        # Sum of weights for rbf outputs corresponding to a particular class should be 1.0
+        # Check that this is True
+        important_ind = np.hstack((np.identity(4, dtype=bool), np.ones((4,1), dtype=bool)))
+        important_weights = np.ma.masked_array(rbfn_c.weights, ~important_ind)
+        weight_sums = np.sum(important_weights, axis=1)
+        self.assertTrue(np.allclose(weight_sums,1))
+
         """
         2) Test if rbf centers are updated properly
         """

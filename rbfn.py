@@ -65,7 +65,7 @@ class RBFN():
         # Variables we will need to track for backprop
         self.input_pts = None        
         self.out_rbf_layer = None
-        self.out_linear_layer = None
+        # self.out_linear_layer = None
 
         # Learning rates
         self.linear_lr = linear_lr
@@ -94,27 +94,32 @@ class RBFN():
         self.out_rbf_layer = add_bias(out_rbf_layer_raw)
 
         # Output of linear layer is (number of input points) X (number of linear units)
-        self.out_linear_layer = np.zeros((input_pts.shape[0], self.weights.shape[0]))
+        network_out = np.zeros((input_pts.shape[0], self.weights.shape[0]))
 
         # Apply weights to output of rbf hidden layer
         for pt_num in range(input_pts.shape[0]):
             for unit_num in range(self.weights.shape[0]):
                 # Apply weights and take sum
-                self.out_linear_layer[pt_num, unit_num] = np.sum(self.out_rbf_layer[pt_num] * self.weights[unit_num])
+                network_out[pt_num, unit_num] = np.sum(self.out_rbf_layer[pt_num] * self.weights[unit_num])
 
-        return self.out_linear_layer
+        return network_out
     
-    def backprop(self, target_out: np.ndarray)->None:
+    def backprop(self, target_out: np.ndarray, network_out: np.ndarray)->None:
         """Update weights and centers through backpropogation using the information from the
         last forward pass
 
         target_out (np.ndarray): NxM numpy array
-            N (rows) is the center output points
-            M (cols) is the number of outputs for each input point
+            Target output for the last network input
+            N (rows) is the number of output points
+            M (cols) is the number of classes for each input point
+        network_out (np.ndarray): NxM numpy array
+            Actual network output for the last network input
+            N (rows) is the number of output points
+            M (cols) is the number of classes for each input point
         """
 
         # Update linear weights
-        error = target_out - self.out_linear_layer
+        error = target_out - network_out
         num_pts = self.input_pts.shape[0]
         weight_deltas = np.zeros((self.weights.shape[0], self.weights.shape[1],num_pts))
         for num_pt in range(num_pts):
