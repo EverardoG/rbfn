@@ -7,14 +7,14 @@ class TestRBFN(unittest.TestCase):
     def test_forward_out(self):
         """Test if we get the output we expect when we do a forward pass on the network
 
-        target_pts is (num_targets) X (num_features)
-        Each row is a target point for an RBF
-        Each column is a feature of that target point
+        center_pts is (num_centers) X (num_features)
+        Each row is a center point for an RBF
+        Each column is a feature of that center point
 
-        First target is all 0s, second is all 1s, etc
+        First center is all 0s, second is all 1s, etc
 
         If we send forward points with features that are all 0,
-        we expect the first target will be activated the most, and so on
+        we expect the first center will be activated the most, and so on
 
         We should just see the output always sum to 2 no matter
         which point we put in. 1 for the sum of all the outputs of the RB functions
@@ -22,21 +22,21 @@ class TestRBFN(unittest.TestCase):
 
         """
         # Set up network with arbitrary parameters
-        num_targets = 5
+        num_centers = 5
         num_features = 20
-        target_pts = np.full((num_features, num_targets), np.arange(5)).T
+        center_pts = np.full((num_features, num_centers), np.arange(5)).T
         num_linear_units = 2
         epsilon = 0.99
-        weights = np.ones((num_linear_units, num_targets+1))
+        weights = np.ones((num_linear_units, num_centers+1))
 
-        # One target is all 0s, next is all 1s, etc
+        # One center is all 0s, next is all 1s, etc
         # Activation function will just return linear layer output without modification
-        rbfn = RBFN(rbf_func=guassian_rbf_func, target_pts=target_pts, 
+        rbfn = RBFN(rbf_func=guassian_rbf_func, center_pts=center_pts, 
                     num_linear_units=num_linear_units, epsilon=epsilon, weights=weights)
         
         # Pass input pts forward
         num_input_pts = 1
-        input_vals = np.arange(num_targets)
+        input_vals = np.arange(num_centers)
         outs = []
         for input_val in input_vals:
             input_pts = np.ones((num_input_pts, num_features)) * input_val
@@ -47,29 +47,29 @@ class TestRBFN(unittest.TestCase):
         for out in outs:
             self.assertTrue(np.allclose(out, exp))
     
-    def test_update_targets(self):
-        """Test if we can update the target points the RBFN uses
+    def test_update_centers(self):
+        """Test if we can update the center points the RBFN uses
         """
         # Set up network with arbitrary parameters
-        num_targets = 5
+        num_centers = 5
         num_features = 20
-        target_pts = np.zeros((num_targets, num_features))
+        center_pts = np.zeros((num_centers, num_features))
         num_linear_units = 2
         epsilon = 0.99
-        rbfn = RBFN(rbf_func=guassian_rbf_func, target_pts=target_pts,
+        rbfn = RBFN(rbf_func=guassian_rbf_func, center_pts=center_pts,
                     num_linear_units=num_linear_units, epsilon=epsilon)
 
-        # Update target point 2
-        new_target_pt = np.ones(num_features)
-        rbfn.update_target(2, new_target_pt)
+        # Update center point 2
+        new_center_pt = np.ones(num_features)
+        rbfn.update_center(2, new_center_pt)
 
-        # Make sure targets were updated properly
-        self.assertTrue(np.allclose(rbfn.target_pts[2,:], new_target_pt))
+        # Make sure centers were updated properly
+        self.assertTrue(np.allclose(rbfn.center_pts[2,:], new_center_pt))
 
-        # Check if the update fails with an improperly sized target point
-        new_target_pt = np.ones(num_features-1)
+        # Check if the update fails with an improperly sized center point
+        new_center_pt = np.ones(num_features-1)
         with self.assertRaises(Exception):
-            rbfn.update_target(2, new_target_pt)
+            rbfn.update_center(2, new_center_pt)
         
     def test_backprop(self):
         """Test if the network backpropogates error properly
