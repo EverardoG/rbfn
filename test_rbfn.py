@@ -70,6 +70,28 @@ class TestRBFN(unittest.TestCase):
         new_target_pt = np.ones(num_features-1)
         with self.assertRaises(Exception):
             rbfn.update_target(2, new_target_pt)
+        
+    def test_backprop(self):
+        """Test if the network backpropogates error properly
+
+        1) Test if linear layer weights are updated properly 
+        Create 4 center points at RBFs with known locations
+        Create 4 linear output units with all weights set to 0
+        Learning rate for centers is 0
+        Learning rate for linear weights is low
+
+        Create 4 input points for training that are copies of the RBF center points
+        Each point belongs to a distinct class: 0,1,2,3
+
+        The network should update weights such that each point is easily classified
+        with training
+        """
+
+        """
+        2) Test if rbf centers are updated properly
+        """
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()
