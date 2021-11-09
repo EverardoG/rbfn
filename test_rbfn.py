@@ -1,4 +1,4 @@
-from rbfn_utils import RBFN, guassian_rbf_func
+from rbfn import RBFN, guassian_rbf_func
 import numpy as np
 import unittest
 
