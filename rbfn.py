@@ -115,25 +115,15 @@ class RBFN():
 
         # Update linear weights
         error = target_out - self.out_linear_layer
-        print("target_out:\n", target_out)
-        print("self.out_linear_layer:\n", self.out_linear_layer)
-        print("error:\n", error)
-        # delta_linear = error * self.out_linear_layer * (1 - self.out_linear_layer)
-        # print("delta_linear:\n", delta_linear)
-        print("self.weights:\n", self.weights)
-        print("self.input_pts:\n", self.input_pts)
         num_pts = self.input_pts.shape[0]
-        # self.weights = np.random.rand( num_linear_units, center_pts.shape[0]+1)
         weight_deltas = np.zeros((self.weights.shape[0], self.weights.shape[1],num_pts))
         for num_pt in range(num_pts):
             # num output is the number of linear units
             for num_output in range(self.weights.shape[0]):
                 # num input is the number of the rbf units + bias term
                 for num_input in range(self.weights.shape[1]):
-                    print("num_pt: ", num_pt, "| num_input: ", num_input, " | num_output: ", num_output)
-                    e = error[num_pt, num_output]
-                    x = self.out_rbf_layer[num_pt, num_input]
-                    weight_deltas[num_output, num_input, num_pt] = self.linear_lr * e * x
+                    weight_deltas[num_output, num_input, num_pt] = \
+                        self.linear_lr * error[num_pt, num_output] * self.out_rbf_layer[num_pt, num_input]
         weight_delta = np.sum(weight_deltas, axis=2)
         self.weights += weight_delta
         return None

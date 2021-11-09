@@ -1,6 +1,8 @@
 from rbfn import RBFN, RBFUNC
 import numpy as np
 import unittest
+from pprint import PrettyPrinter
+PP = PrettyPrinter()
 
 class TestRBFN(unittest.TestCase):
 
@@ -103,14 +105,28 @@ class TestRBFN(unittest.TestCase):
         ])
         input_pts = np.copy(center_pts)
         weights = np.zeros((target_out.shape[1], center_pts.shape[0]+1))
-        epsilon = 0.99
+        epsilon = 2.0
         linear_lr = 0.05
         rbf_lr = 0
         rbfn_c = RBFN(rbfunc=RBFUNC.GUASSIAN, center_pts=center_pts, num_linear_units=weights.shape[0], epsilon=epsilon, linear_lr=linear_lr, rbf_lr=rbf_lr, weights=weights)
         # Run input data through RBFN and run backprop one step
+        # print(input_pts[0,:].shape)
+        single_pt = np.expand_dims(input_pts[0],axis=0)
+        single_t = np.expand_dims(target_out[0],axis=0)
+        # in = single_pt
         _ = rbfn_c.forward(input_pts)
-        rbfn_c.backprop(target_out)
+        np.set_printoptions(precision=2, suppress=True)
+        print("Weights before:")
         print(rbfn_c.weights)
+        rbfn_c.backprop(target_out)
+        print("RBF layer out:")
+        print(rbfn_c.out_rbf_layer)
+        print("Weights after:")
+        print(rbfn_c.weights)
+        print(rbfn_c.out_linear_layer)
+        # l = rbfn_c.weights.tolist()
+        # l = [[]]
+        # PP.pprint()
         """
         2) Test if rbf centers are updated properly
         """
