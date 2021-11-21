@@ -133,11 +133,52 @@ class TestRBFN(unittest.TestCase):
         important_weights = np.ma.masked_array(rbfn_c.weights, ~important_ind)
         weight_sums = np.sum(important_weights, axis=1)
         self.assertTrue(np.allclose(weight_sums,1))
-
         """
         2) Test if rbf centers are updated properly
-        """
+        Use the same setup as before, but with slight changes
+        - Learning rate for linear weights is 0
+        - Learning rate for rbf centers is positive, non-zero
+        - Linear weights are converged weights from previous network
+        - RBF centers are slightly different than before
 
+        The expected behavior is that the RBF centers of the new network
+        should converge to be the RBF centers of the previous network
+        """
+        # Setup second rbfn
+        center_pts2 = np.array([
+            [-1.1, 1.1],
+            [1.1,  1.1],
+            [1.1, -1.1],
+            [-1.1,-1.1]
+        ], dtype=float)
+        weights2 = np.array([
+            [ 0.8,  -0.2,  -0.2,  -0.2,  0.2],
+            [-0.2,  0.8,   -0.2,  -0.2,  0.2],
+            [-0.2, -0.2,   0.8,   -0.2,  0.2],
+            [-0.2, -0.2,   -0.2,   0.8,  0.2]
+        ])
+        linear_lr2 = 0
+        rbf_lr2 = 2.0
+        rbfn_c2 = RBFN(rbfunc=RBFUNC.GUASSIAN, center_pts=np.copy(center_pts2), num_linear_units=weights2.shape[0], epsilon=epsilon, linear_lr=linear_lr2, rbf_lr=rbf_lr2, weights=weights2)
+
+        # Run input data through RBFN and run backprop one step
+        network_out2 = rbfn_c2.forward(input_pts)
+        rbfn_c2.backprop(target_out, network_out2)
+
+        # If each RBF center moves closer to 1,1 in its respective quadrant, we know the
+        # centers are moving towards convergence
+        for center_pt_ind in range(center_pts2.shape[0]):
+            distance_to_old_center = np.linalg.norm(center_pts2[center_pt_ind] - center_pts[center_pt_ind])
+            distance_to_new_center = np.linalg.norm(rbfn_c2.center_pts[center_pt_ind] - center_pts[center_pt_ind])
+            if distance_to_old_center < distance_to_new_center:
+                # Each center should get CLOSER to ideal center, NOT further away
+                assert(False)
+        
+        # Make sure RBF centers converge with 1/100 precision for each element
+        for _ in range(600):
+            network_out2 = rbfn_c2.forward(input_pts)
+            rbfn_c2.backprop(target_out, network_out2)
+        assert(np.allclose(rbfn_c2.center_pts, center_pts, atol=1e-02))
 
 if __name__ == "__main__":
     unittest.main()
